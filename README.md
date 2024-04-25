@@ -16,3 +16,6 @@ It is currently configured to process `fs-1.png` in the data directory, on line 
 * `filter_close_corners, extend_line, line_intersection,` and `order_points` are all helper methods for corner detection to find the board. It isn't perfect if the board arrangement is weird, but I think it's good enough. 
 
 **sample.py**: I'll rename this later, but this file basically is additional functionality that allows a user to select the region inside of which the board detection will run, in case the video screenshot is too busy. It's not an issue with the current testing video but was in the past and may recur in the future. You can ignore for now.
+
+
+### NOTE WELL: you have to close any previous instance of images, fully, from a previous run of the file in order to run a new instance. You can only do this by pressing the `0` key (although any other may work as well) to close it out. Make sure to click on the popup image(s) so they are selected before pressing the kill key to close them out.
