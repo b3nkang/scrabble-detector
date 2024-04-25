@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 from sklearn.cluster import DBSCAN
+import os
+from datetime import datetime
 
 def filter_close_corners(corners, min_distance=30):
     if not corners:
@@ -69,6 +71,36 @@ def order_points(pts):
     
     return rect
 
+def split_into_grid(img, pdt, pdb, pdl, pdr):
+    w = (img.shape[1] - pdl - pdr) / 15
+    h = (img.shape[0] - pdt - pdb) / 15
+    
+    cells = []
+    for row in range(15):
+        for col in range(15):
+            start_x = int(pdl + col * w)
+            end_x = int(start_x + w)
+            start_y = int(pdt + row * h)
+            end_y = int(start_y + h)
+            
+            cell = img[start_y:end_y, start_x:end_x]
+            cells.append(cell)
+    return cells
+
+def save_to_dir(images, base_dir="split_cells/run_"):
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    dir_name = f"{base_dir}{timestamp}"
+    os.makedirs(dir_name, exist_ok=True)
+    
+    x_labels = [chr(i) for i in range(ord('A'), ord('O') + 1)]
+    y_labels = [str(i) for i in range(1, 16)]
+
+    for i, img in enumerate(images):
+        x_coord = x_labels[i % 15]
+        y_coord = y_labels[i // 15]
+        filename = os.path.join(dir_name, f"cell_{x_coord}{y_coord}.png")
+        cv2.imwrite(filename, img)
+        print(f"Saved {filename}")
 
 # img = cv2.imread('./data/test_cropped.png')
 # img = cv2.imread('./data/test_empty.png')
@@ -178,3 +210,24 @@ def crop_img(fpath):
     cv2.imshow('cropped',warped)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+    return warped
+
+# for others: this is padding for the edges of the board - 
+# I don't think it will be necessary to change but just fyi
+pdt = 28
+pdb = 28
+pdl = 28
+pdr = 28
+
+# this is the image here   vvvvvvv   which is going to be split
+cropped = crop_img("./data/fs1.png")
+cells = split_into_grid(cropped, pdt, pdb, pdl, pdr)
+save_to_dir(cells)
+
+# previews of a select few split images
+cv2.imshow('Cell A1 (tl corner)', cells[0])
+cv2.imshow('Cell G8 (center)', cells[7 * 15 + 7])
+cv2.imshow('Cell O15 (br corner)', cells[14 * 15 + 14])
+cv2.waitKey(0)
+cv2.destroyAllWindows()
