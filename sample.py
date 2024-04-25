@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import cropper
+import time
 
 def draw_rectangle(event, x, y, flags, param):
     global point, img
@@ -10,59 +12,43 @@ def draw_rectangle(event, x, y, flags, param):
         cv2.rectangle(img, point[0], point[1], (0, 255, 0), 2)
         cv2.imshow("img", img)
 
-img = cv2.imread('./data/test1.png')
-clone = img.copy()
-cv2.namedWindow("img")
-cv2.setMouseCallback("img", draw_rectangle)
+def select_and_crop(fpath):
+    global img
+    img = cv2.imread(fpath)
+    clone = img.copy()
+    cv2.namedWindow("img")
+    cv2.setMouseCallback("img", draw_rectangle)
 
-while True:
-    cv2.imshow("img", img)
-    key = cv2.waitKey(1) & 0xFF
-    if key == ord('r'):
-        img = clone.copy()
-    elif key == ord('c'):
-        break
-cv2.destroyAllWindows()
-
-if len(point) == 2:
-    roi = img[min(point[0][1], point[1][1]):max(point[0][1], point[1][1]),
-                min(point[0][0], point[1][0]):max(point[0][0], point[1][0])]
-    
-    gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    _, thresholded = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    contours, _ = cv2.findContours(thresholded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-    cv2.imshow('threshed', thresholded)
-    cv2.waitKey(0)
+    while True:
+        cv2.imshow("img", img)
+        key = cv2.waitKey(0) & 0xFF
+        if key == ord('r'):
+            img = clone.copy()
+        elif key == ord('c'):
+            break
+        else:
+            point = [(0, 0), (img.shape[1], img.shape[0])]
+            break
     cv2.destroyAllWindows()
 
-    filled = thresholded.copy()  
-    for contour in contours:
-        cv2.drawContours(filled, [contour], -1, 255, -1)
+    if len(point) == 2:
+        cropper.crop_img(fpath)
 
-    cv2.imshow('filled attempt', filled)
-    cv2.waitKey(0)
+def crop_no_selection(fpath):
+    img = cv2.imread(fpath)
+    cv2.imshow("orig",img)
+    time.sleep(0.5)
     cv2.destroyAllWindows()
+    cropper.crop_img(fpath)
 
-    contours, _ = cv2.findContours(thresholded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    min_area = 250000
-    min_aspect_ratio = 0.8
-    max_aspect_ratio = 1.2
-    valid_contours = []
+# img = cv2.imread('./data/test1.png')
+# img = cv2.imread('./data/19-1.png')
+# img = cv2.imread('./data/19-2.png')
+# img = cv2.imread('./data/19-3.png')
+# img = cv2.imread('./data/19-4.png')
+# img = cv2.imread('./data/19-5.png')
 
-    for contour in contours:
-        area = cv2.contourArea(contour)
-        if area > min_area:
-            x, y, w, h = cv2.boundingRect(contour)
-            aspect_ratio = float(w) / h
-            if min_aspect_ratio <= aspect_ratio <= max_aspect_ratio:
-                valid_contours.append(contour)
-
-    largest_contour = max(valid_contours, key=cv2.contourArea)
-    cv2.drawContours(roi, [largest_contour], -1, (0, 255, 0), 3)
-
-    cv2.imshow('lg valid cont', roi)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+# select_and_crop("./data/fs1.png")
+# select_and_crop("./data/fs3.png")
+crop_no_selection("./data/fs3.png")
